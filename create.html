@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Create Your Wrapped 💕 Valentine Wrapped 2026</title>
+    <meta name="description" content="Create your beautiful Valentine Wrapped in 60 seconds.">
+    <meta name="theme-color" content="#0a0612">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/create.css">
+</head>
+
+<body>
+    <!-- Particles -->
+    <div class="particles-container" id="particles"></div>
+
+    <!-- Ambient Orbs -->
+    <div class="ambient-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="wizard-progress">
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-fill" style="width: 14.28%"></div>
+        </div>
+        <div class="progress-info">
+            <a href="index.html" class="back-link" id="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </a>
+            <span class="step-indicator" id="step-indicator">Step 1 of 7</span>
+            <span class="time-hint">⚡ ~60 sec</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="wizard-container">
+        <div class="steps-wrapper" id="steps-wrapper">
+
+            <!-- Step 1: Your Name -->
+            <div class="wizard-step active" data-step="1">
+                <div class="step-content">
+                    <div class="step-emoji">💁</div>
+                    <h2 class="step-title">What's your name?</h2>
+                    <p class="step-subtitle">Let's start with you, love</p>
+                    <div class="input-group">
+                        <input type="text" class="input-field input-large" id="name1" placeholder="Your name"
+                            maxlength="30" autocomplete="given-name" autofocus>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg btn-next" data-next="2" id="btn-step1" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Partner's Name -->
+            <div class="wizard-step" data-step="2">
+                <div class="step-content">
+                    <div class="step-emoji">💖</div>
+                    <h2 class="step-title">Partner's name?</h2>
+                    <p class="step-subtitle">The one who makes your heart race</p>
+                    <div class="input-group">
+                        <input type="text" class="input-field input-large" id="name2" placeholder="Their name"
+                            maxlength="30" autocomplete="off">
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg btn-next" data-next="3" id="btn-step2" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Relationship Start Date -->
+            <div class="wizard-step" data-step="3">
+                <div class="step-content">
+                    <div class="step-emoji">📅</div>
+                    <h2 class="step-title">When did it all begin?</h2>
+                    <p class="step-subtitle">The date that changed everything</p>
+                    <div class="input-group">
+                        <input type="date" class="input-field input-large" id="start-date" max="">
+                    </div>
+                    <p class="date-hint">Don't remember exact date? Just pick the closest one 😊</p>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg btn-next" data-next="4" id="btn-step3" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Couple Vibe (MCQ) -->
+            <div class="wizard-step" data-step="4">
+                <div class="step-content">
+                    <div class="step-emoji">🎭</div>
+                    <h2 class="step-title">Your couple vibe?</h2>
+                    <p class="step-subtitle">Pick the one that screams "us!"</p>
+                    <div class="mcq-options" id="vibe-options">
+                        <button class="mcq-option" data-value="adventurous">
+                            <span class="mcq-emoji">🌍</span>
+                            <span class="mcq-label">The Adventurous Duo</span>
+                            <span class="mcq-desc">Road trips, spontaneous plans</span>
+                        </button>
+                        <button class="mcq-option" data-value="cozy">
+                            <span class="mcq-emoji">🛋️</span>
+                            <span class="mcq-label">The Cozy Soulmates</span>
+                            <span class="mcq-desc">Netflix, blankets, silence</span>
+                        </button>
+                        <button class="mcq-option" data-value="chaotic">
+                            <span class="mcq-emoji">🎪</span>
+                            <span class="mcq-label">The Beautiful Chaos</span>
+                            <span class="mcq-desc">Loud laughs, silly fights</span>
+                        </button>
+                        <button class="mcq-option" data-value="classic">
+                            <span class="mcq-emoji">🌹</span>
+                            <span class="mcq-label">The Timeless Romance</span>
+                            <span class="mcq-desc">Deep talks, meaningful glances</span>
+                        </button>
+                        <button class="mcq-option" data-value="longdistance">
+                            <span class="mcq-emoji">📱</span>
+                            <span class="mcq-label">The Distance Warriors</span>
+                            <span class="mcq-desc">Video calls, counting days</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg btn-next" data-next="5" id="btn-step4" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Best Memory (MCQ) -->
+            <div class="wizard-step" data-step="5">
+                <div class="step-content">
+                    <div class="step-emoji">✨</div>
+                    <h2 class="step-title">Best memory together?</h2>
+                    <p class="step-subtitle">The moment you'll never forget</p>
+                    <div class="mcq-options" id="memory-options">
+                        <button class="mcq-option" data-value="firstdate">
+                            <span class="mcq-emoji">🥰</span>
+                            <span class="mcq-label">Our First Date</span>
+                        </button>
+                        <button class="mcq-option" data-value="trip">
+                            <span class="mcq-emoji">🛫</span>
+                            <span class="mcq-label">A Trip Together</span>
+                        </button>
+                        <button class="mcq-option" data-value="latenight">
+                            <span class="mcq-emoji">🌙</span>
+                            <span class="mcq-label">Late Night Talks</span>
+                        </button>
+                        <button class="mcq-option" data-value="festival">
+                            <span class="mcq-emoji">🎉</span>
+                            <span class="mcq-label">Festival / Celebration</span>
+                        </button>
+                        <button class="mcq-option" data-value="surprise">
+                            <span class="mcq-emoji">🎁</span>
+                            <span class="mcq-label">A Special Surprise</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg btn-next" data-next="6" id="btn-step5" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 6: What Makes Them Special (MCQ) -->
+            <div class="wizard-step" data-step="6">
+                <div class="step-content">
+                    <div class="step-emoji">💫</div>
+                    <h2 class="step-title">What makes them special?</h2>
+                    <p class="step-subtitle">That one thing you absolutely love</p>
+                    <div class="mcq-options" id="trait-options">
+                        <button class="mcq-option" data-value="humor">
+                            <span class="mcq-emoji">😂</span>
+                            <span class="mcq-label">Their Humor</span>
+                        </button>
+                        <button class="mcq-option" data-value="care">
+                            <span class="mcq-emoji">🤗</span>
+                            <span class="mcq-label">How They Care</span>
+                        </button>
+                        <button class="mcq-option" data-value="eyes">
+                            <span class="mcq-emoji">👀</span>
+                            <span class="mcq-label">Those Beautiful Eyes</span>
+                        </button>
+                        <button class="mcq-option" data-value="voice">
+                            <span class="mcq-emoji">🎵</span>
+                            <span class="mcq-label">Their Voice</span>
+                        </button>
+                        <button class="mcq-option" data-value="everything">
+                            <span class="mcq-emoji">🫶</span>
+                            <span class="mcq-label">Everything About Them</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg btn-next" data-next="7" id="btn-step6" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 7: Photo Upload (Optional) -->
+            <div class="wizard-step" data-step="7">
+                <div class="step-content">
+                    <div class="step-emoji">📸</div>
+                    <h2 class="step-title">A couple photo?</h2>
+                    <p class="step-subtitle">Optional — makes your wrapped even more special!</p>
+
+                    <div class="photo-upload-area" id="upload-area">
+                        <input type="file" id="photo-input" accept="image/*" class="visually-hidden">
+                        <div class="upload-placeholder" id="upload-placeholder">
+                            <div class="upload-icon">📷</div>
+                            <p class="upload-text">Tap to add a photo</p>
+                            <p class="upload-hint">JPG, PNG • Max 5MB</p>
+                        </div>
+                        <div class="upload-preview" id="upload-preview" style="display:none;">
+                            <img id="preview-img" src="" alt="Couple photo preview">
+                            <button class="remove-photo" id="remove-photo">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg" id="btn-generate" onclick="generateWrapped()">
+                        ✨ Generate My Wrapped
+                    </button>
+                    <button class="btn btn-secondary btn-sm skip-btn" id="btn-skip" onclick="generateWrapped()">
+                        Skip photo & generate
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+        <div class="loading-content">
+            <div class="loading-heart heartbeat">💕</div>
+            <h3 class="loading-title">Wrapping Your Love Story...</h3>
+            <div class="loading-bar">
+                <div class="loading-bar-fill" id="loading-bar-fill"></div>
+            </div>
+            <p class="loading-text" id="loading-text">Counting your love days...</p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/create.js"></script>
+</body>
+
+</html>

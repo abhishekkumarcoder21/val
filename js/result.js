@@ -1,0 +1,677 @@
+/* ============================================
+   Valentine Wrapped 2026 — Result Page Logic
+   ============================================ */
+
+(function () {
+    'use strict';
+
+    // Load user data
+    const data = ValStorage.load();
+    if (!data || !data.name1) {
+        window.location.href = 'create.html';
+        return;
+    }
+
+    const { name1, name2, startDate, vibe, memory, trait, photo } = data;
+    const stats = calculateStats(startDate);
+    const vibeInfo = VIBE_DESCRIPTIONS[vibe] || VIBE_DESCRIPTIONS['classic'];
+    const loveLetter = generateLoveLetter(name1, name2, trait);
+    const memoryLabel = MEMORY_DESCRIPTIONS[memory] || 'Our Special Moment ✨';
+
+    // Premium state
+    let isPremium = data.isPremium || false;
+
+    // ============================================
+    // Build Cards
+    // ============================================
+    const cards = [];
+
+    // Slide 1: Title Card
+    cards.push({
+        id: 'title',
+        free: true,
+        html: `
+      <div class="wrapped-card card-bg-title">
+        <div class="wrapped-card-inner">
+          <span class="card-sparkle card-sparkle-1">✨</span>
+          <span class="card-sparkle card-sparkle-2">💕</span>
+          <span class="card-sparkle card-sparkle-3">✨</span>
+          <span class="card-sparkle card-sparkle-4">💖</span>
+          <div class="card-title-names">
+            <span class="text-gradient">${escapeHtml(name1)}</span>
+            <span class="card-title-and">&</span>
+            <span class="text-gradient">${escapeHtml(name2)}</span>
+          </div>
+          <div class="card-title-badge">
+            <span>💕</span> Valentine Wrapped 2026
+          </div>
+          <div class="card-watermark">valentinewrapped.in</div>
+        </div>
+      </div>
+    `
+    });
+
+    // Slide 2: Stats Card
+    cards.push({
+        id: 'stats',
+        free: true,
+        html: `
+      <div class="wrapped-card card-bg-stats">
+        <div class="wrapped-card-inner">
+          <span class="card-sparkle card-sparkle-1">💫</span>
+          <span class="card-sparkle card-sparkle-2">✨</span>
+          <p style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:var(--space-xl);">YOUR LOVE IN NUMBERS</p>
+          <div class="card-stats-items">
+            <div class="stat-item">
+              <div class="stat-value text-gradient">${stats.days.toLocaleString()}</div>
+              <div class="stat-label">Days of Love</div>
+            </div>
+            <div class="stats-divider"></div>
+            <div class="stat-item">
+              <div class="stat-value text-gradient">${stats.hours.toLocaleString()}</div>
+              <div class="stat-label">Hours Together</div>
+            </div>
+            <div class="stats-divider"></div>
+            <div class="stat-item">
+              <div class="stat-value text-gradient">${stats.sunsets.toLocaleString()}</div>
+              <div class="stat-label">Sunsets Shared</div>
+            </div>
+          </div>
+          <div class="card-watermark">valentinewrapped.in</div>
+        </div>
+      </div>
+    `
+    });
+
+    // Slide 3: Vibe Card
+    cards.push({
+        id: 'vibe',
+        free: true,
+        html: `
+      <div class="wrapped-card card-bg-vibe">
+        <div class="wrapped-card-inner">
+          <span class="card-sparkle card-sparkle-1">✨</span>
+          <span class="card-sparkle card-sparkle-4">💫</span>
+          <p style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:var(--space-xl);">YOUR COUPLE VIBE</p>
+          <div class="card-vibe-emoji">${vibeInfo.emoji}</div>
+          <div class="card-vibe-title" style="color:${vibeInfo.color}">${vibeInfo.title}</div>
+          <div class="card-vibe-desc">${vibeInfo.desc}</div>
+          <div class="card-watermark">valentinewrapped.in</div>
+        </div>
+      </div>
+    `
+    });
+
+    // Slide 4: Love Letter (Premium)
+    cards.push({
+        id: 'letter',
+        free: false,
+        html: `
+      <div class="wrapped-card card-bg-letter">
+        <div class="wrapped-card-inner">
+          <span class="card-sparkle card-sparkle-1">💌</span>
+          <span class="card-sparkle card-sparkle-2">✨</span>
+          <p style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:var(--space-xl);">A LETTER FOR YOU</p>
+          <div class="card-letter-quote">
+            ${escapeHtml(loveLetter.letter)}
+          </div>
+          <div class="card-letter-from">— With love, ${escapeHtml(loveLetter.from)} 💕</div>
+          <div class="card-watermark">valentinewrapped.in</div>
+        </div>
+      </div>
+    `
+    });
+
+    // Slide 5: Photo Card (Premium, only if photo exists)
+    if (photo) {
+        cards.push({
+            id: 'photo',
+            free: false,
+            html: `
+        <div class="wrapped-card card-bg-photo">
+          <div class="wrapped-card-inner">
+            <span class="card-sparkle card-sparkle-1">📸</span>
+            <span class="card-sparkle card-sparkle-2">✨</span>
+            <p style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:var(--space-lg);">OUR FAVORITE MEMORY</p>
+            <div class="card-photo-frame">
+              <img src="${photo}" alt="Couple photo">
+            </div>
+            <div class="card-photo-memory">${memoryLabel}</div>
+            <div class="card-watermark">valentinewrapped.in</div>
+          </div>
+        </div>
+      `
+        });
+    }
+
+    // Slide 6: CTA Card (Always included, free)
+    cards.push({
+        id: 'cta',
+        free: true,
+        html: `
+      <div class="wrapped-card card-bg-cta">
+        <div class="wrapped-card-inner">
+          <span class="card-sparkle card-sparkle-1">💕</span>
+          <span class="card-sparkle card-sparkle-2">✨</span>
+          <span class="card-sparkle card-sparkle-3">💖</span>
+          <span class="card-sparkle card-sparkle-4">💫</span>
+          <div class="card-cta-heart heartbeat">💕</div>
+          <div class="card-cta-text">
+            Unwrap Your<br>Love Story Too
+          </div>
+          <div class="card-cta-site">valentinewrapped.in</div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:var(--space-xl);">Create yours in 60 seconds ✨</p>
+          <div class="card-watermark">Valentine Wrapped 2026 💕</div>
+        </div>
+      </div>
+    `
+    });
+
+    // ============================================
+    // Render Cards
+    // ============================================
+    const cardsTrack = document.getElementById('cards-track');
+    const dotsContainer = document.getElementById('carousel-dots');
+
+    cards.forEach((card, index) => {
+        // Create card slide
+        const slide = document.createElement('div');
+        slide.className = 'card-slide';
+        slide.dataset.cardId = card.id;
+
+        let cardHtml = card.html;
+
+        // Add lock overlay for premium cards if not premium user
+        if (!card.free && !isPremium) {
+            cardHtml = `
+        <div style="position:relative;">
+          ${card.html}
+          <div class="card-lock-overlay">
+            <div class="lock-icon">🔒</div>
+            <div class="lock-text">Premium Only</div>
+            <div class="lock-subtext">Unlock from ₹49</div>
+          </div>
+        </div>
+      `;
+        }
+
+        slide.innerHTML = cardHtml;
+        cardsTrack.appendChild(slide);
+
+        // Create dot
+        const dot = document.createElement('button');
+        dot.className = 'carousel-dot' + (index === 0 ? ' active' : '');
+        dot.dataset.index = index;
+        dot.addEventListener('click', () => goToCard(index));
+        dotsContainer.appendChild(dot);
+    });
+
+    // ============================================
+    // Carousel Logic
+    // ============================================
+    let currentCard = 0;
+    const totalCards = cards.length;
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+
+    function goToCard(index) {
+        if (index < 0) index = 0;
+        if (index >= totalCards) index = totalCards - 1;
+
+        currentCard = index;
+        cardsTrack.style.transform = `translateX(-${index * 100}%)`;
+
+        // Update dots
+        document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+
+        // Update arrows visibility
+        prevBtn.style.opacity = index === 0 ? '0.3' : '1';
+        nextBtn.style.opacity = index === totalCards - 1 ? '0.3' : '1';
+    }
+
+    prevBtn.addEventListener('click', () => goToCard(currentCard - 1));
+    nextBtn.addEventListener('click', () => goToCard(currentCard + 1));
+
+    // Touch/Swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    cardsTrack.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    cardsTrack.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) goToCard(currentCard + 1); // Swipe left → next
+            else goToCard(currentCard - 1); // Swipe right → prev
+        }
+    }, { passive: true });
+
+    // Init
+    goToCard(0);
+
+    // Set partner name in quiz CTA
+    const partnerNameQuiz = document.getElementById('partner-name-quiz');
+    if (partnerNameQuiz) partnerNameQuiz.textContent = name2;
+
+    // ============================================
+    // Download Card as PNG
+    // ============================================
+    window.downloadCurrentCard = async function () {
+        const cardSlide = document.querySelectorAll('.card-slide')[currentCard];
+        const card = cardSlide.querySelector('.wrapped-card');
+        if (!card) return;
+
+        // Check if premium required
+        if (!cards[currentCard].free && !isPremium) {
+            showToast('🔒 Unlock premium to download this card!');
+            return;
+        }
+
+        showToast('📥 Preparing download...');
+
+        try {
+            const canvas = await htmlToCanvas(card);
+            downloadCanvas(canvas, `valentine-wrapped-${cards[currentCard].id}.png`);
+            showToast('✅ Downloaded!');
+        } catch (err) {
+            console.error('Download error:', err);
+            showToast('❌ Download failed. Try screenshot instead.');
+        }
+    };
+
+    window.downloadAllCards = async function () {
+        showToast('📦 Preparing all cards...');
+
+        for (let i = 0; i < cards.length; i++) {
+            if (!cards[i].free && !isPremium) continue;
+
+            const cardSlide = document.querySelectorAll('.card-slide')[i];
+            const card = cardSlide.querySelector('.wrapped-card');
+            if (!card) continue;
+
+            try {
+                const canvas = await htmlToCanvas(card);
+                downloadCanvas(canvas, `valentine-wrapped-${i + 1}-${cards[i].id}.png`);
+                // Small delay between downloads
+                await new Promise(r => setTimeout(r, 500));
+            } catch (err) {
+                console.error(`Error downloading card ${i}:`, err);
+            }
+        }
+
+        showToast('✅ All cards downloaded!');
+    };
+
+    // ============================================
+    // HTML to Canvas (Simple Implementation)
+    // ============================================
+    async function htmlToCanvas(element) {
+        // Use the render area for proper sizing
+        const renderArea = document.getElementById('card-render-area');
+
+        // Clone the element
+        const clone = element.cloneNode(true);
+        clone.style.width = '1080px';
+        clone.style.height = '1920px';
+        clone.style.maxWidth = 'none';
+        clone.style.position = 'absolute';
+        clone.style.top = '0';
+        clone.style.left = '0';
+        clone.style.borderRadius = '0';
+
+        // Scale fonts for 1080x1920
+        clone.style.fontSize = '3.2em';
+
+        renderArea.appendChild(clone);
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1920;
+        const ctx = canvas.getContext('2d');
+
+        // Draw background
+        const bgColor = getComputedStyle(element).backgroundColor || '#0a0612';
+        ctx.fillStyle = '#0a0612';
+        ctx.fillRect(0, 0, 1080, 1920);
+
+        // Use SVG foreignObject approach for rendering
+        const data = new XMLSerializer().serializeToString(clone);
+        const svgStr = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920">
+        <foreignObject width="100%" height="100%">
+          <div xmlns="http://www.w3.org/1999/xhtml">
+            ${data}
+          </div>
+        </foreignObject>
+      </svg>
+    `;
+
+        // Clean up clone
+        renderArea.removeChild(clone);
+
+        // Try SVG first; fall back to simple canvas drawing
+        try {
+            const img = new Image();
+            const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = url;
+            });
+
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            // Fallback: draw a styled canvas manually
+            drawCardManually(ctx, cards[currentCard], data);
+        }
+
+        return canvas;
+    }
+
+    // ============================================
+    // Manual Canvas Drawing (Fallback)
+    // ============================================
+    function drawCardManually(ctx, cardData, htmlString) {
+        const w = 1080;
+        const h = 1920;
+
+        // Background gradient
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0a0612');
+        grad.addColorStop(0.4, '#1a0a2e');
+        grad.addColorStop(0.7, '#2d1045');
+        grad.addColorStop(1, '#0a0612');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Sparkles
+        ctx.font = '40px serif';
+        ctx.fillText('✨', 120, 200);
+        ctx.fillText('💕', 900, 180);
+        ctx.fillText('✨', 100, 1700);
+        ctx.fillText('💖', 930, 1680);
+
+        if (cardData.id === 'title') {
+            // Title card
+            ctx.textAlign = 'center';
+
+            // Names
+            ctx.font = 'bold 80px "Playfair Display", Georgia, serif';
+            ctx.fillStyle = '#e8436a';
+            ctx.fillText(name1, w / 2, h / 2 - 120);
+
+            ctx.font = '70px "Dancing Script", cursive';
+            ctx.fillStyle = '#ff6b8a';
+            ctx.fillText('&', w / 2, h / 2 - 30);
+
+            ctx.font = 'bold 80px "Playfair Display", Georgia, serif';
+            ctx.fillStyle = '#e8436a';
+            ctx.fillText(name2, w / 2, h / 2 + 70);
+
+            // Badge
+            ctx.font = '30px "Inter", sans-serif';
+            ctx.fillStyle = '#ff6b8a';
+            ctx.fillText('💕 Valentine Wrapped 2026', w / 2, h / 2 + 200);
+
+        } else if (cardData.id === 'stats') {
+            ctx.textAlign = 'center';
+            ctx.font = '28px "Inter", sans-serif';
+            ctx.fillStyle = '#666';
+            ctx.fillText('YOUR LOVE IN NUMBERS', w / 2, 400);
+
+            ctx.font = 'bold 120px "Playfair Display", serif';
+            ctx.fillStyle = '#e8436a';
+            ctx.fillText(stats.days.toLocaleString(), w / 2, 700);
+            ctx.font = '32px "Inter", sans-serif';
+            ctx.fillStyle = '#aaa';
+            ctx.fillText('Days of Love', w / 2, 760);
+
+            ctx.font = 'bold 100px "Playfair Display", serif';
+            ctx.fillStyle = '#ff6b8a';
+            ctx.fillText(stats.hours.toLocaleString(), w / 2, 1050);
+            ctx.font = '32px "Inter", sans-serif';
+            ctx.fillStyle = '#aaa';
+            ctx.fillText('Hours Together', w / 2, 1110);
+
+            ctx.font = 'bold 100px "Playfair Display", serif';
+            ctx.fillStyle = '#ff9ecd';
+            ctx.fillText(stats.sunsets.toLocaleString(), w / 2, 1400);
+            ctx.font = '32px "Inter", sans-serif';
+            ctx.fillStyle = '#aaa';
+            ctx.fillText('Sunsets Shared', w / 2, 1460);
+
+        } else if (cardData.id === 'vibe') {
+            ctx.textAlign = 'center';
+            ctx.font = '28px "Inter", sans-serif';
+            ctx.fillStyle = '#666';
+            ctx.fillText('YOUR COUPLE VIBE', w / 2, 450);
+
+            ctx.font = '160px serif';
+            ctx.fillText(vibeInfo.emoji, w / 2, 750);
+
+            ctx.font = 'bold 60px "Playfair Display", serif';
+            ctx.fillStyle = vibeInfo.color;
+            ctx.fillText(vibeInfo.title, w / 2, 920);
+
+            // Word wrap description
+            ctx.font = '32px "Inter", sans-serif';
+            ctx.fillStyle = '#ccc';
+            wrapText(ctx, vibeInfo.desc, w / 2, 1020, 800, 46);
+
+        } else if (cardData.id === 'letter') {
+            ctx.textAlign = 'center';
+            ctx.font = '28px "Inter", sans-serif';
+            ctx.fillStyle = '#666';
+            ctx.fillText('A LETTER FOR YOU', w / 2, 450);
+
+            // Quote mark
+            ctx.font = '200px "Playfair Display", serif';
+            ctx.fillStyle = 'rgba(232, 67, 106, 0.2)';
+            ctx.fillText('"', 200, 700);
+
+            // Letter text with wrapping
+            ctx.font = '48px "Dancing Script", cursive';
+            ctx.fillStyle = '#ffffff';
+            wrapText(ctx, loveLetter.letter, w / 2, 800, 800, 65);
+
+            // From
+            ctx.font = 'italic 34px "Inter", sans-serif';
+            ctx.fillStyle = '#ff6b8a';
+            ctx.fillText(`— With love, ${name1} 💕`, w / 2, 1400);
+
+        } else {
+            // Generic fallback
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 60px "Playfair Display", serif';
+            ctx.fillStyle = '#e8436a';
+            ctx.fillText('Valentine Wrapped', w / 2, h / 2 - 40);
+            ctx.font = '36px "Inter", sans-serif';
+            ctx.fillStyle = '#ff6b8a';
+            ctx.fillText('2026', w / 2, h / 2 + 30);
+        }
+
+        // Watermark
+        ctx.font = '24px "Inter", sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.textAlign = 'center';
+        ctx.fillText('valentinewrapped.in', w / 2, h - 60);
+    }
+
+    // ============================================
+    // Text Wrapping Helper
+    // ============================================
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
+
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth && i > 0) {
+                ctx.fillText(line.trim(), x, currentY);
+                line = words[i] + ' ';
+                currentY += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line.trim(), x, currentY);
+    }
+
+    // ============================================
+    // Download Canvas as PNG
+    // ============================================
+    function downloadCanvas(canvas, filename) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // ============================================
+    // Share Functions
+    // ============================================
+    const INSTAGRAM_CAPTION = `Our love, wrapped 💕✨
+
+${stats.days} days of love, ${stats.hours.toLocaleString()} hours together.
+We are ${vibeInfo.title}
+
+Create yours → valentinewrapped.in
+
+#ValentineWrapped #ValentineWrapped2026 #Valentine2026 #CoupleGoals #LoveStory`;
+
+    window.copyCaption = function () {
+        navigator.clipboard.writeText(INSTAGRAM_CAPTION).then(() => {
+            showToast('📋 Caption copied! Paste on Instagram');
+        }).catch(() => {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = INSTAGRAM_CAPTION;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('📋 Caption copied!');
+        });
+    };
+
+    window.shareWhatsApp = function () {
+        const text = encodeURIComponent(`Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in\n\n#ValentineWrapped2026`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    };
+
+    window.shareInstagram = function () {
+        showToast('📥 Download the card, then share on Instagram!');
+        window.downloadCurrentCard();
+    };
+
+    window.copyLink = function () {
+        navigator.clipboard.writeText('https://valentinewrapped.in').then(() => {
+            showToast('🔗 Link copied!');
+        }).catch(() => {
+            showToast('🔗 valentinewrapped.in');
+        });
+    };
+
+    // ============================================
+    // Payment (Tier Buttons)
+    // ============================================
+    document.querySelectorAll('.tier-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tier = btn.dataset.tier;
+            const price = btn.dataset.price;
+            handlePayment(tier, price);
+        });
+    });
+
+    function handlePayment(tier, price) {
+        // Check if Razorpay is available
+        if (typeof Razorpay !== 'undefined') {
+            initiateRazorpay(tier, price);
+        } else {
+            // Demo mode — simulate payment
+            if (confirm(`Upgrade to ${tier} for ₹${price}?\n\n(Demo mode — Razorpay not configured)\nClick OK to simulate payment success.`)) {
+                unlockPremium(tier);
+            }
+        }
+    }
+
+    function initiateRazorpay(tier, price) {
+        const options = {
+            key: 'YOUR_RAZORPAY_KEY', // Replace with actual key
+            amount: parseInt(price) * 100, // Amount in paise
+            currency: 'INR',
+            name: 'Valentine Wrapped',
+            description: `Wrapped ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+            handler: function (response) {
+                unlockPremium(tier);
+                showToast('🎉 Payment successful! Premium unlocked!');
+            },
+            theme: {
+                color: '#e8436a'
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+    }
+
+    function unlockPremium(tier) {
+        isPremium = true;
+        ValStorage.save({ isPremium: true, premiumTier: tier });
+
+        // Remove lock overlays
+        document.querySelectorAll('.card-lock-overlay').forEach(el => el.remove());
+
+        // Hide upgrade banner
+        document.getElementById('upgrade-banner').style.display = 'none';
+
+        // Remove watermarks if pro or ultimate
+        if (tier !== 'basic') {
+            document.querySelectorAll('.card-watermark').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+
+        showToast('🎉 Premium unlocked! All cards available!');
+    }
+
+    // ============================================
+    // Toast
+    // ============================================
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        toastMsg.textContent = message;
+        toast.style.display = 'block';
+        toast.style.animation = 'none';
+        toast.offsetHeight; // Force reflow
+        toast.style.animation = 'fadeInUp 0.3s ease-out forwards';
+
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 2500);
+    }
+
+    // ============================================
+    // Escape HTML
+    // ============================================
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+})();
