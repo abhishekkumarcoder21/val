@@ -505,6 +505,12 @@
     const recordTime = document.getElementById('record-time');
     const recordProgress = document.getElementById('record-progress');
     const recordHint = document.getElementById('record-hint');
+    const shareStoryBtn = document.getElementById('btn-share-story');
+    const shareActionsRow = document.getElementById('share-actions');
+
+    // Store the last recorded video blob for sharing
+    let lastVideoBlob = null;
+    let lastVideoFileName = '';
 
     recordBtn.addEventListener('click', () => {
         recordVideo();
@@ -515,6 +521,10 @@
         recordBtn.disabled = true;
         recordBtn.textContent = '⏳ Preparing...';
         overlay.classList.add('hidden');
+
+        // Hide share buttons during recording
+        shareStoryBtn.style.display = 'none';
+        shareActionsRow.style.display = 'none';
 
         // Set up recording
         const stream = canvas.captureStream(30); // 30 FPS
@@ -529,6 +539,11 @@
             mimeType = 'video/webm';
         }
 
+        // Also try mp4 for better Instagram compatibility
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+            mimeType = 'video/mp4';
+        }
+
         const recorder = new MediaRecorder(stream, {
             mimeType: mimeType,
             videoBitsPerSecond: 5000000 // 5 Mbps for good quality
@@ -540,10 +555,15 @@
 
         recorder.onstop = () => {
             const blob = new Blob(chunks, { type: mimeType });
+            const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+            lastVideoFileName = `valentine-wrapped-${name1}-${name2}.${ext}`;
+            lastVideoBlob = blob;
+
+            // Auto-download
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `valentine-wrapped-${name1}-${name2}.webm`;
+            a.download = lastVideoFileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -557,7 +577,13 @@
             overlay.classList.remove('hidden');
             playBtn.querySelector('span:last-child').textContent = 'Replay';
 
-            showToast('✅ Video downloaded! Share on Instagram Stories 🎉');
+            // Show share buttons with animation
+            shareStoryBtn.style.display = '';
+            shareActionsRow.style.display = '';
+            shareStoryBtn.style.animation = 'fadeInUp 0.4s ease-out forwards';
+            shareActionsRow.style.animation = 'fadeInUp 0.5s ease-out 0.1s forwards';
+
+            showToast('✅ Video ready! Share it to your Story 🎉');
         };
 
         // Start recording
@@ -588,6 +614,150 @@
             stopAnimation();
         }, DURATION + 500); // Small buffer
     }
+
+    // ============================================
+    // Share Video Functions
+    // ============================================
+
+    /**
+     * Share video file using Web Share API (works on mobile).
+     * Falls back to download on desktop.
+     */
+    async function shareVideoFile(title) {
+        if (!lastVideoBlob) {
+            showToast('🎬 Record a video first!');
+            return false;
+        }
+
+        const file = new File([lastVideoBlob], lastVideoFileName, {
+            type: lastVideoBlob.type
+        });
+
+        // Check if Web Share API supports file sharing
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    title: title || 'Valentine Wrapped 2026 💕',
+                    text: `Our love, wrapped 💕✨ ${stats.days} days of love together!\nCreate yours → valentinewrapped.in`,
+                    files: [file]
+                });
+                showToast('✅ Shared successfully!');
+                return true;
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    // User cancelled — do nothing
+                    return false;
+                }
+                console.error('Share failed:', err);
+            }
+        }
+
+        // Fallback: download the file
+        const url = URL.createObjectURL(lastVideoBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = lastVideoFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('📥 Downloaded! Open Instagram → Add to Story');
+        return false;
+    }
+
+    /**
+     * Share to Instagram Story:
+     * On mobile, uses Web Share API which opens Instagram directly.
+     * On desktop, downloads the video and guides the user.
+     */
+    shareStoryBtn.addEventListener('click', async () => {
+        const shared = await shareVideoFile('Valentine Wrapped Story 💕');
+        if (!shared) {
+            // Already handled by fallback
+        }
+    });
+
+    // Instagram share pill
+    document.getElementById('btn-share-ig').addEventListener('click', async () => {
+        await shareVideoFile('Valentine Wrapped Story 💕');
+    });
+
+    // WhatsApp share pill
+    document.getElementById('btn-share-wa').addEventListener('click', async () => {
+        if (!lastVideoBlob) {
+            showToast('🎬 Record a video first!');
+            return;
+        }
+
+        const file = new File([lastVideoBlob], lastVideoFileName, {
+            type: lastVideoBlob.type
+        });
+
+        // Try Web Share API with file for WhatsApp
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    title: 'Valentine Wrapped 💕',
+                    text: `Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in`,
+                    files: [file]
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+
+        // Fallback: open WhatsApp with text (no file)
+        const text = encodeURIComponent(`Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in\n\n#ValentineWrapped2026`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+        showToast('📥 Download the video first, then attach in WhatsApp');
+    });
+
+    // Generic share / More options
+    document.getElementById('btn-share-more').addEventListener('click', async () => {
+        if (!lastVideoBlob) {
+            showToast('🎬 Record a video first!');
+            return;
+        }
+
+        const file = new File([lastVideoBlob], lastVideoFileName, {
+            type: lastVideoBlob.type
+        });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    title: 'Valentine Wrapped 2026 💕',
+                    text: `Our Valentine Wrapped 💕 Create yours → valentinewrapped.in`,
+                    files: [file]
+                });
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    showToast('❌ Sharing failed. Try downloading instead.');
+                }
+            }
+        } else if (navigator.share) {
+            // Share without file
+            try {
+                await navigator.share({
+                    title: 'Valentine Wrapped 2026 💕',
+                    text: `Check out our Valentine Wrapped! 💕 Create yours → valentinewrapped.in`,
+                    url: 'https://valentinewrapped.in'
+                });
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    showToast('❌ Sharing failed.');
+                }
+            }
+        } else {
+            // No share API at all — copy link
+            navigator.clipboard.writeText('https://valentinewrapped.in').then(() => {
+                showToast('🔗 Link copied! Share it manually');
+            }).catch(() => {
+                showToast('🔗 valentinewrapped.in — Share this link!');
+            });
+        }
+    });
 
     // ============================================
     // Toast
