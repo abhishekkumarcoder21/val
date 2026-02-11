@@ -644,6 +644,41 @@
 }
 
 /* ============================================
+   Video CTA
+   ============================================ */
+.video-cta {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    border: 1px solid rgba(107, 92, 231, 0.2);
+    background: linear-gradient(145deg, rgba(107, 92, 231, 0.08), rgba(232, 67, 106, 0.06));
+    animation: fadeInUp 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+}
+
+.video-cta-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+    animation: float 3s ease-in-out infinite;
+}
+
+.video-cta h3 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin-bottom: var(--space-sm);
+}
+
+.video-cta p {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+}
+
+.video-cta .btn {
+    width: 100%;
+    max-width: 280px;
+}
+
+/* ============================================
    Create Another
    ============================================ */
 .create-another {
