@@ -18,8 +18,7 @@
   const loveLetter = generateLoveLetter(name1, name2, trait);
   const memoryLabel = MEMORY_DESCRIPTIONS[memory] || 'Our Special Moment ✨';
 
-  // Premium state
-  let isPremium = data.isPremium || false;
+  // All features are free for everyone!
 
   // ============================================
   // Build Cards
@@ -102,10 +101,10 @@
     `
   });
 
-  // Slide 4: Love Letter (Premium)
+  // Slide 4: Love Letter
   cards.push({
     id: 'letter',
-    free: false,
+    free: true,
     html: `
       <div class="wrapped-card card-bg-letter">
         <div class="wrapped-card-inner">
@@ -122,11 +121,11 @@
     `
   });
 
-  // Slide 5: Photo Card (Premium, only if photo exists)
+  // Slide 5: Photo Card (only if photo exists)
   if (photo) {
     cards.push({
       id: 'photo',
-      free: false,
+      free: true,
       html: `
         <div class="wrapped-card card-bg-photo">
           <div class="wrapped-card-inner">
@@ -180,20 +179,6 @@
     slide.dataset.cardId = card.id;
 
     let cardHtml = card.html;
-
-    // Add lock overlay for premium cards if not premium user
-    if (!card.free && !isPremium) {
-      cardHtml = `
-        <div style="position:relative;">
-          ${card.html}
-          <div class="card-lock-overlay">
-            <div class="lock-icon">🔒</div>
-            <div class="lock-text">Premium Only</div>
-            <div class="lock-subtext">Unlock from ₹49</div>
-          </div>
-        </div>
-      `;
-    }
 
     slide.innerHTML = cardHtml;
     cardsTrack.appendChild(slide);
@@ -266,11 +251,7 @@
     const card = cardSlide.querySelector('.wrapped-card');
     if (!card) return;
 
-    // Check if premium required
-    if (!cards[currentCard].free && !isPremium) {
-      showToast('🔒 Unlock premium to download this card!');
-      return;
-    }
+
 
     showToast('📥 Preparing download...');
 
@@ -288,7 +269,7 @@
     showToast('📦 Preparing all cards...');
 
     for (let i = 0; i < cards.length; i++) {
-      if (!cards[i].free && !isPremium) continue;
+
 
       const cardSlide = document.querySelectorAll('.card-slide')[i];
       const card = cardSlide.querySelector('.wrapped-card');
@@ -628,11 +609,6 @@ Create yours → valentinewrapped.in
   };
 
   window.shareInstagram = async function () {
-    // Check if premium required for current card
-    if (!cards[currentCard].free && !isPremium) {
-      showToast('🔒 Unlock premium to share this card!');
-      return;
-    }
 
     const cardSlide = document.querySelectorAll('.card-slide')[currentCard];
     const card = cardSlide.querySelector('.wrapped-card');
@@ -681,68 +657,7 @@ Create yours → valentinewrapped.in
     });
   };
 
-  // ============================================
-  // Payment (Tier Buttons)
-  // ============================================
-  document.querySelectorAll('.tier-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tier = btn.dataset.tier;
-      const price = btn.dataset.price;
-      handlePayment(tier, price);
-    });
-  });
 
-  function handlePayment(tier, price) {
-    // Check if Razorpay is available
-    if (typeof Razorpay !== 'undefined') {
-      initiateRazorpay(tier, price);
-    } else {
-      // Demo mode — simulate payment
-      if (confirm(`Upgrade to ${tier} for ₹${price}?\n\n(Demo mode — Razorpay not configured)\nClick OK to simulate payment success.`)) {
-        unlockPremium(tier);
-      }
-    }
-  }
-
-  function initiateRazorpay(tier, price) {
-    const options = {
-      key: 'YOUR_RAZORPAY_KEY', // Replace with actual key
-      amount: parseInt(price) * 100, // Amount in paise
-      currency: 'INR',
-      name: 'Valentine Wrapped',
-      description: `Wrapped ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
-      handler: function (response) {
-        unlockPremium(tier);
-        showToast('🎉 Payment successful! Premium unlocked!');
-      },
-      theme: {
-        color: '#e8436a'
-      }
-    };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
-  }
-
-  function unlockPremium(tier) {
-    isPremium = true;
-    ValStorage.save({ isPremium: true, premiumTier: tier });
-
-    // Remove lock overlays
-    document.querySelectorAll('.card-lock-overlay').forEach(el => el.remove());
-
-    // Hide upgrade banner
-    document.getElementById('upgrade-banner').style.display = 'none';
-
-    // Remove watermarks if pro or ultimate
-    if (tier !== 'basic') {
-      document.querySelectorAll('.card-watermark').forEach(el => {
-        el.style.display = 'none';
-      });
-    }
-
-    showToast('🎉 Premium unlocked! All cards available!');
-  }
 
   // ============================================
   // Toast
