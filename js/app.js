@@ -6,6 +6,7 @@
 // Particles System
 // ============================================
 function initParticles() {
+  // this is the initParticle function
   const container = document.getElementById('particles');
   if (!container) return;
 
