@@ -13,7 +13,7 @@
         return;
     }
 
-    const { name1, name2, startDate, vibe, memory, trait } = data;
+    const { name1, name2, startDate, vibe, memory, trait, photo } = data;
     const stats = calculateStats(startDate);
     const vibeInfo = VIBE_DESCRIPTIONS[vibe] || VIBE_DESCRIPTIONS['classic'];
     const loveLetter = generateLoveLetter(name1, name2, trait);
@@ -29,7 +29,21 @@
     let animFrame = null;
     let startTime = 0;
     let isPlaying = false;
-    const DURATION = 12000; // 12 seconds
+    const DURATION = 14000; // 14 seconds (extended for photo section)
+
+    // ============================================
+    // Load Photo Image
+    // ============================================
+    let photoImg = null;
+    let photoLoaded = false;
+
+    if (photo) {
+        photoImg = new Image();
+        photoImg.crossOrigin = 'anonymous';
+        photoImg.onload = () => { photoLoaded = true; drawStaticPreview(); };
+        photoImg.onerror = () => { photoLoaded = false; photoImg = null; };
+        photoImg.src = photo;
+    }
 
     // ============================================
     // Floating Particles (Hearts & Gifts)
@@ -243,20 +257,126 @@
     }
 
     // ============================================
+    // Draw Photo with Animated Love Border
+    // ============================================
+    function drawPhotoFrame(cx, cy, size, elapsed, alpha, animStartMs) {
+        if (!photoImg || !photoLoaded) return;
+
+        const halfSize = size / 2;
+        const cornerR = 24;
+        const t = (elapsed - animStartMs) / 1000; // time in seconds since photo appeared
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // === Outer glow (pulsing) ===
+        const glowPulse = 0.5 + 0.3 * Math.sin(t * 2.5);
+        const glowSize = size + 40;
+        const glowGrad = ctx.createRadialGradient(cx, cy, size * 0.3, cx, cy, glowSize);
+        glowGrad.addColorStop(0, `rgba(232, 67, 106, ${0.15 * glowPulse})`);
+        glowGrad.addColorStop(0.5, `rgba(255, 107, 138, ${0.08 * glowPulse})`);
+        glowGrad.addColorStop(1, 'rgba(232, 67, 106, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, glowSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        // === Love border frame (gradient border) ===
+        const borderW = 6;
+        const borderGrad = ctx.createLinearGradient(cx - halfSize, cy - halfSize, cx + halfSize, cy + halfSize);
+        borderGrad.addColorStop(0, '#e8436a');
+        borderGrad.addColorStop(0.3, '#ff6b8a');
+        borderGrad.addColorStop(0.6, '#ff9ecd');
+        borderGrad.addColorStop(1, '#e8436a');
+        ctx.strokeStyle = borderGrad;
+        ctx.lineWidth = borderW;
+        ctx.beginPath();
+        ctx.roundRect(cx - halfSize - borderW, cy - halfSize - borderW,
+            size + borderW * 2, size + borderW * 2, cornerR + 4);
+        ctx.stroke();
+
+        // === Draw the photo (clipped to rounded rect) ===
+        ctx.beginPath();
+        ctx.roundRect(cx - halfSize, cy - halfSize, size, size, cornerR);
+        ctx.clip();
+
+        // Scale & center-crop the photo
+        const imgW = photoImg.naturalWidth;
+        const imgH = photoImg.naturalHeight;
+        const scale = Math.max(size / imgW, size / imgH);
+        const drawW = imgW * scale;
+        const drawH = imgH * scale;
+        ctx.drawImage(photoImg,
+            cx - drawW / 2, cy - drawH / 2,
+            drawW, drawH
+        );
+
+        ctx.restore();
+
+        // === Rotating heart ring around the photo ===
+        const heartEmojis = ['❤️', '💕', '💖', '💗', '💝', '🩷'];
+        const numHearts = 8;
+        const orbitRadius = halfSize + 35;
+        const rotAngle = t * 0.4; // Slow rotation
+
+        for (let i = 0; i < numHearts; i++) {
+            const angle = (i / numHearts) * Math.PI * 2 + rotAngle;
+            const hx = cx + Math.cos(angle) * orbitRadius;
+            const hy = cy + Math.sin(angle) * orbitRadius;
+
+            // Each heart has a subtle float
+            const floatY = Math.sin(t * 2 + i * 0.8) * 4;
+            const heartScale = 0.8 + 0.2 * Math.sin(t * 3 + i * 1.2);
+
+            ctx.save();
+            ctx.globalAlpha = alpha * (0.6 + 0.4 * Math.sin(t * 2 + i));
+            ctx.translate(hx, hy + floatY);
+            ctx.scale(heartScale, heartScale);
+            ctx.font = '28px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(heartEmojis[i % heartEmojis.length], 0, 0);
+            ctx.restore();
+        }
+
+        // === Corner sparkle hearts (pulsing) ===
+        const cornerOffset = halfSize + 8;
+        const corners = [
+            { x: cx - cornerOffset, y: cy - cornerOffset, emoji: '💖' },
+            { x: cx + cornerOffset, y: cy - cornerOffset, emoji: '💕' },
+            { x: cx - cornerOffset, y: cy + cornerOffset, emoji: '💗' },
+            { x: cx + cornerOffset, y: cy + cornerOffset, emoji: '💝' }
+        ];
+
+        corners.forEach((c, i) => {
+            const pulseScale = 0.9 + 0.3 * Math.sin(t * 3.5 + i * 1.5);
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.85;
+            ctx.translate(c.x, c.y);
+            ctx.scale(pulseScale, pulseScale);
+            ctx.font = '34px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(c.emoji, 0, 0);
+            ctx.restore();
+        });
+    }
+
+    // ============================================
     // Main Animation Frame
     // ============================================
-    // Timeline (12 seconds):
+    // Timeline (14 seconds — extended for photo):
     //  0.0s - 0.5s  : Background fades in
     //  0.3s - 1.2s  : "Valentine Wrapped 2026" badge
-    //  0.8s - 2.0s  : Names slide in
-    //  2.0s - 2.5s  : "&" swoops in
-    //  2.5s - 3.5s  : Divider line
-    //  3.0s - 5.5s  : Stats count up (days, hours, sunsets)
-    //  5.5s - 7.0s  : Couple Vibe badge
-    //  7.0s - 9.5s  : Love Letter text
-    //  9.5s - 10.5s : Memory label
-    // 10.5s - 12.0s : CTA (valentinewrapped.in)
-    // 0.0s - 12.0s  : Particles float throughout
+    //  0.8s - 2.0s  : Names slide in + "&" swoops
+    //  2.0s - 3.5s  : Photo with love border (animated)
+    //  3.5s - 4.0s  : Divider line
+    //  4.0s - 6.5s  : Stats count up (days, hours, sunsets)
+    //  6.5s - 8.0s  : Couple Vibe badge
+    //  8.0s - 10.5s : Love Letter text
+    // 10.5s - 11.5s : Memory label
+    // 11.5s - 14.0s : CTA (valentinewrapped.in)
+    // 0.0s - 14.0s  : Particles float throughout
 
     function renderFrame(elapsed) {
         // Clear
@@ -275,7 +395,7 @@
         {
             const s = slideUp(elapsed, 300, 700, 30);
             if (s.alpha > 0) {
-                const y = 280 - s.offsetY;
+                const y = 200 - s.offsetY;
                 // Pill background
                 ctx.save();
                 ctx.globalAlpha = s.alpha * 0.7;
@@ -296,7 +416,7 @@
         {
             const s = slideUp(elapsed, 800, 600, 40);
             if (s.alpha > 0) {
-                drawTextGradient(name1, cx, 520 - s.offsetY, 'bold 90px "Playfair Display", Georgia, serif', s.alpha);
+                drawTextGradient(name1, cx, 380 - s.offsetY, 'bold 90px "Playfair Display", Georgia, serif', s.alpha);
             }
         }
 
@@ -307,7 +427,7 @@
                 ctx.save();
                 ctx.globalAlpha = s.alpha;
                 const scl = easeOutBack(clamp01((elapsed - 1300) / 500));
-                ctx.translate(cx, 620 - s.offsetY);
+                ctx.translate(cx, 470 - s.offsetY);
                 ctx.scale(scl, scl);
                 ctx.font = '80px "Dancing Script", cursive';
                 ctx.fillStyle = '#ff9ecd';
@@ -322,59 +442,85 @@
         {
             const s = slideUp(elapsed, 1600, 600, 40);
             if (s.alpha > 0) {
-                drawTextGradient(name2, cx, 720 - s.offsetY, 'bold 90px "Playfair Display", Georgia, serif', s.alpha);
+                drawTextGradient(name2, cx, 560 - s.offsetY, 'bold 90px "Playfair Display", Georgia, serif', s.alpha);
+            }
+        }
+
+        // ---- Photo with Love Border (NEW!) ----
+        if (photoImg && photoLoaded) {
+            const photoStart = 2000;
+            const s = slideUp(elapsed, photoStart, 800, 60);
+            if (s.alpha > 0) {
+                const scl = easeOutBack(clamp01((elapsed - photoStart) / 800));
+                const photoY = 800 - s.offsetY;
+                const photoSize = 320;
+
+                ctx.save();
+                ctx.translate(cx, photoY);
+                ctx.scale(scl, scl);
+                ctx.translate(-cx, -photoY);
+                drawPhotoFrame(cx, photoY, photoSize, elapsed, s.alpha, photoStart);
+                ctx.restore();
+
+                // Memory label below photo
+                if (elapsed > photoStart + 500) {
+                    const memAlpha = fadeIn(elapsed, photoStart + 500, 400);
+                    drawText(memoryLabel, cx, photoY + photoSize / 2 + 55, '500 28px Inter, sans-serif', '#ff9ecd', memAlpha * s.alpha);
+                }
             }
         }
 
         // ---- Divider ----
         {
-            const a = fadeIn(elapsed, 2500, 500);
+            const dividerY = photoImg && photoLoaded ? 1020 : 820;
+            const a = fadeIn(elapsed, 3500, 500);
             if (a > 0) {
-                drawDivider(cx, 820, 300 * a, a);
+                drawDivider(cx, dividerY, 300 * a, a);
             }
         }
 
         // ---- Stats Section ----
         {
-            const sectionAlpha = fadeIn(elapsed, 2800, 400);
+            const statsBaseY = photoImg && photoLoaded ? 1060 : 890;
+            const sectionAlpha = fadeIn(elapsed, 3800, 400);
             if (sectionAlpha > 0) {
-                drawText('YOUR LOVE IN NUMBERS', cx, 890, '600 24px Inter, sans-serif', 'rgba(255,255,255,0.4)', sectionAlpha);
+                drawText('YOUR LOVE IN NUMBERS', cx, statsBaseY, '600 24px Inter, sans-serif', 'rgba(255,255,255,0.4)', sectionAlpha);
             }
 
             // Days
-            const s1 = slideUp(elapsed, 3000, 600, 30);
+            const s1 = slideUp(elapsed, 4000, 600, 30);
             if (s1.alpha > 0) {
-                const val = animateValue(elapsed, 3000, 1500, stats.days);
-                drawTextGradient(val.toLocaleString(), cx, 980 - s1.offsetY, 'bold 100px "Playfair Display", serif', s1.alpha);
-                drawText('Days of Love', cx, 1040 - s1.offsetY, '400 28px Inter, sans-serif', 'rgba(255,255,255,0.6)', s1.alpha);
+                const val = animateValue(elapsed, 4000, 1500, stats.days);
+                drawTextGradient(val.toLocaleString(), cx, statsBaseY + 90 - s1.offsetY, 'bold 100px "Playfair Display", serif', s1.alpha);
+                drawText('Days of Love', cx, statsBaseY + 150 - s1.offsetY, '400 28px Inter, sans-serif', 'rgba(255,255,255,0.6)', s1.alpha);
             }
 
             // Hours
-            const s2 = slideUp(elapsed, 3500, 600, 30);
+            const s2 = slideUp(elapsed, 4500, 600, 30);
             if (s2.alpha > 0) {
-                const val = animateValue(elapsed, 3500, 1500, stats.hours);
-                drawTextGradient(val.toLocaleString(), cx, 1140 - s2.offsetY, 'bold 80px "Playfair Display", serif', s2.alpha);
-                drawText('Hours Together', cx, 1195 - s2.offsetY, '400 26px Inter, sans-serif', 'rgba(255,255,255,0.6)', s2.alpha);
+                const val = animateValue(elapsed, 4500, 1500, stats.hours);
+                drawTextGradient(val.toLocaleString(), cx, statsBaseY + 250 - s2.offsetY, 'bold 80px "Playfair Display", serif', s2.alpha);
+                drawText('Hours Together', cx, statsBaseY + 305 - s2.offsetY, '400 26px Inter, sans-serif', 'rgba(255,255,255,0.6)', s2.alpha);
             }
 
             // Sunsets
-            const s3 = slideUp(elapsed, 4000, 600, 30);
+            const s3 = slideUp(elapsed, 5000, 600, 30);
             if (s3.alpha > 0) {
-                const val = animateValue(elapsed, 4000, 1500, stats.sunsets);
-                drawTextGradient(val.toLocaleString(), cx, 1290 - s3.offsetY, 'bold 80px "Playfair Display", serif', s3.alpha);
-                drawText('Sunsets Shared', cx, 1345 - s3.offsetY, '400 26px Inter, sans-serif', 'rgba(255,255,255,0.6)', s3.alpha);
+                const val = animateValue(elapsed, 5000, 1500, stats.sunsets);
+                drawTextGradient(val.toLocaleString(), cx, statsBaseY + 400 - s3.offsetY, 'bold 80px "Playfair Display", serif', s3.alpha);
+                drawText('Sunsets Shared', cx, statsBaseY + 455 - s3.offsetY, '400 26px Inter, sans-serif', 'rgba(255,255,255,0.6)', s3.alpha);
             }
         }
 
         // ---- Couple Vibe ----
         {
-            const s = slideUp(elapsed, 5500, 700, 40);
+            const s = slideUp(elapsed, 6500, 700, 40);
             if (s.alpha > 0) {
-                const vy = 1460 - s.offsetY;
+                const vy = 1580 - s.offsetY;
                 // Emoji
                 ctx.save();
                 ctx.globalAlpha = s.alpha;
-                const scl = easeOutBack(clamp01((elapsed - 5500) / 700));
+                const scl = easeOutBack(clamp01((elapsed - 6500) / 700));
                 ctx.translate(cx, vy);
                 ctx.scale(scl, scl);
                 ctx.font = '70px serif';
@@ -389,21 +535,21 @@
 
         // ---- Love Letter ----
         {
-            const s = slideUp(elapsed, 7000, 800, 30);
+            const s = slideUp(elapsed, 8000, 800, 30);
             if (s.alpha > 0) {
                 // Quote mark
-                drawText('"', cx - 320, 1620 - s.offsetY, '150px "Playfair Display", serif', 'rgba(232, 67, 106, 0.15)', s.alpha);
+                drawText('"', cx - 320, 1720 - s.offsetY, '150px "Playfair Display", serif', 'rgba(232, 67, 106, 0.15)', s.alpha);
                 // Letter
-                wrapText(loveLetter.letter, cx, 1680 - s.offsetY, 800, 52,
+                wrapText(loveLetter.letter, cx, 1760 - s.offsetY, 800, 52,
                     '42px "Dancing Script", cursive', '#ffffff', s.alpha);
                 // From
-                drawText(`— ${loveLetter.from} 💕`, cx, 1810 - s.offsetY, 'italic 28px Inter, sans-serif', '#ff6b8a', s.alpha);
+                drawText(`— ${loveLetter.from} 💕`, cx, 1860 - s.offsetY, 'italic 28px Inter, sans-serif', '#ff6b8a', s.alpha);
             }
         }
 
         // ---- Watermark / CTA ----
         {
-            const a = fadeIn(elapsed, 10500, 600);
+            const a = fadeIn(elapsed, 11500, 600);
             if (a > 0) {
                 drawText('valentinewrapped.in', cx, H - 60, '500 24px Inter, sans-serif', 'rgba(255,255,255,0.25)', a);
             }
@@ -458,19 +604,24 @@
         initParticles();
         drawParticles();
 
+        // Badge
+        drawText('💕  Valentine Wrapped 2026', W / 2, 200, '600 26px Inter, sans-serif', '#ff6b8a', 0.7);
+
         // Show names
-        drawTextGradient(name1, W / 2, 520, 'bold 90px "Playfair Display", Georgia, serif', 0.9);
+        drawTextGradient(name1, W / 2, 380, 'bold 90px "Playfair Display", Georgia, serif', 0.9);
         ctx.save();
         ctx.font = '80px "Dancing Script", cursive';
         ctx.fillStyle = '#ff9ecd';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('&', W / 2, 620);
+        ctx.fillText('&', W / 2, 470);
         ctx.restore();
-        drawTextGradient(name2, W / 2, 720, 'bold 90px "Playfair Display", Georgia, serif', 0.9);
+        drawTextGradient(name2, W / 2, 560, 'bold 90px "Playfair Display", Georgia, serif', 0.9);
 
-        // Badge
-        drawText('💕  Valentine Wrapped 2026', W / 2, 280, '600 26px Inter, sans-serif', '#ff6b8a', 0.7);
+        // Show photo if available
+        if (photoImg && photoLoaded) {
+            drawPhotoFrame(W / 2, 800, 320, 2000, 0.9, 0);
+        }
 
         // Watermark
         drawText('valentinewrapped.in', W / 2, H - 60, '500 24px Inter, sans-serif', 'rgba(255,255,255,0.2)', 1);
@@ -506,7 +657,7 @@
     const recordProgress = document.getElementById('record-progress');
     const recordHint = document.getElementById('record-hint');
     const shareStoryBtn = document.getElementById('btn-share-story');
-    const shareActionsRow = document.getElementById('share-actions');
+    const shareActionsRow = document.getElementById('share-actions') || document.getElementById('share-row');
 
     // Store the last recorded video blob for sharing
     let lastVideoBlob = null;
@@ -530,19 +681,39 @@
         const stream = canvas.captureStream(30); // 30 FPS
         const chunks = [];
 
-        // Try video/webm with vp9 first, then vp8, then any
-        let mimeType = 'video/webm;codecs=vp9';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'video/webm;codecs=vp8';
+        // MIME type selection: Prioritize MP4 (H.264) for Instagram compatibility
+        // Instagram ONLY accepts MP4/H.264 — WebM will NOT work!
+        const mp4Types = [
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2',  // H.264 Baseline + AAC
+            'video/mp4;codecs=avc1.4D401E,mp4a.40.2',  // H.264 Main + AAC
+            'video/mp4;codecs=avc1.42E01E',              // H.264 Baseline (no audio)
+            'video/mp4;codecs=avc1,opus',                // H.264 + Opus audio
+            'video/mp4;codecs=avc1',                     // H.264 generic
+            'video/mp4',                                  // MP4 generic
+        ];
+
+        const webmTypes = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm',
+        ];
+
+        // Try MP4 first (required for Instagram), then fall back to WebM
+        let mimeType = '';
+        for (const type of [...mp4Types, ...webmTypes]) {
+            if (MediaRecorder.isTypeSupported(type)) {
+                mimeType = type;
+                break;
+            }
         }
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
+
+        if (!mimeType) {
+            // Last resort fallback
             mimeType = 'video/webm';
         }
 
-        // Also try mp4 for better Instagram compatibility
-        if (MediaRecorder.isTypeSupported('video/mp4')) {
-            mimeType = 'video/mp4';
-        }
+        const isMP4 = mimeType.includes('mp4');
+        console.log('Recording with MIME type:', mimeType, '(MP4:', isMP4, ')');
 
         const recorder = new MediaRecorder(stream, {
             mimeType: mimeType,
@@ -583,7 +754,8 @@
             shareStoryBtn.style.animation = 'fadeInUp 0.4s ease-out forwards';
             shareActionsRow.style.animation = 'fadeInUp 0.5s ease-out 0.1s forwards';
 
-            showToast('✅ Video ready! Share it to your Story 🎉');
+            const formatNote = isMP4 ? '' : ' (⚠️ WebM format — may not work on Instagram)';
+            showToast(`✅ Video ready!${formatNote} Share it to your Story 🎉`);
         };
 
         // Start recording
@@ -620,6 +792,39 @@
     // ============================================
 
     /**
+     * Detect if user is on mobile
+     */
+    function isMobile() {
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Detect if user is on Android
+     */
+    function isAndroid() {
+        return /Android/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Detect if user is on iOS
+     */
+    function isIOS() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Convert blob to base64 data URL
+     */
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    /**
      * Share video file using Web Share API (works on mobile).
      * Falls back to download on desktop.
      */
@@ -645,7 +850,6 @@
                 return true;
             } catch (err) {
                 if (err.name === 'AbortError') {
-                    // User cancelled — do nothing
                     return false;
                 }
                 console.error('Share failed:', err);
@@ -653,6 +857,16 @@
         }
 
         // Fallback: download the file
+        downloadVideoBlob();
+        showToast('📥 Downloaded! Open Instagram → Add to Story');
+        return false;
+    }
+
+    /**
+     * Download the video blob as a file
+     */
+    function downloadVideoBlob() {
+        if (!lastVideoBlob) return;
         const url = URL.createObjectURL(lastVideoBlob);
         const a = document.createElement('a');
         a.href = url;
@@ -661,103 +875,163 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast('📥 Downloaded! Open Instagram → Add to Story');
-        return false;
     }
 
     /**
-     * Share to Instagram Story:
-     * On mobile, uses Web Share API which opens Instagram directly.
-     * On desktop, downloads the video and guides the user.
+     * Share directly to Instagram Story.
+     * 
+     * The ONLY way to pass an actual video file to Instagram Stories
+     * from a mobile browser is via the Web Share API with just the file.
+     * Deep links (instagram://story-camera) open the camera but can't
+     * pass the video, so we don't use them.
+     * 
+     * Strategy:
+     * 1. On mobile: Use navigator.share() with ONLY the video file
+     *    (no title, no text). This gives a clean share sheet where
+     *    "Instagram Stories" appears. Tapping it loads the video
+     *    directly into the story editor — one tap to post!
+     * 2. On desktop: Download + guidance toast.
      */
-    shareStoryBtn.addEventListener('click', async () => {
-        const shared = await shareVideoFile('Valentine Wrapped Story 💕');
-        if (!shared) {
-            // Already handled by fallback
-        }
-    });
-
-    // Instagram share pill
-    document.getElementById('btn-share-ig').addEventListener('click', async () => {
-        await shareVideoFile('Valentine Wrapped Story 💕');
-    });
-
-    // WhatsApp share pill
-    document.getElementById('btn-share-wa').addEventListener('click', async () => {
+    async function shareToInstagramStory() {
         if (!lastVideoBlob) {
             showToast('🎬 Record a video first!');
             return;
         }
 
-        const file = new File([lastVideoBlob], lastVideoFileName, {
-            type: lastVideoBlob.type
+        // Always present the file as MP4 to Instagram
+        // Instagram only accepts MP4/H.264 files
+        const isActuallyMP4 = lastVideoBlob.type.includes('mp4');
+        const shareFileName = lastVideoFileName.replace(/\.webm$/, '.mp4');
+        const shareMimeType = 'video/mp4';
+
+        const file = new File([lastVideoBlob], shareFileName, {
+            type: shareMimeType
         });
 
-        // Try Web Share API with file for WhatsApp
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Mobile — use Web Share API with file only
+        if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
-                await navigator.share({
-                    title: 'Valentine Wrapped 💕',
-                    text: `Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in`,
-                    files: [file]
-                });
+                await navigator.share({ files: [file] });
+                showToast('✅ Shared to Instagram Story!');
                 return;
             } catch (err) {
-                if (err.name === 'AbortError') return;
+                if (err.name === 'AbortError') {
+                    return;
+                }
+                console.error('Web Share failed:', err);
+
+                // If share failed and video is WebM, it might be format issue
+                if (!isActuallyMP4) {
+                    showToast('⚠️ Your browser recorded in WebM format. Instagram needs MP4. Try updating Chrome.');
+                    return;
+                }
             }
         }
 
-        // Fallback: open WhatsApp with text (no file)
-        const text = encodeURIComponent(`Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in\n\n#ValentineWrapped2026`);
-        window.open(`https://wa.me/?text=${text}`, '_blank');
-        showToast('📥 Download the video first, then attach in WhatsApp');
+        // Fallback: download and guide
+        downloadVideoBlob();
+        if (isMobile()) {
+            showToast('📥 Video saved! Open Instagram → Your Story → Select video');
+        } else {
+            showToast('📥 Video downloaded! Send it to your phone and share on Instagram');
+        }
+    }
+
+    /**
+     * Share to Instagram Story button handler
+     */
+    shareStoryBtn.addEventListener('click', async () => {
+        await shareToInstagramStory();
     });
+
+    // Instagram share pill (only on video.html)
+    const shareIgBtn = document.getElementById('btn-share-ig');
+    if (shareIgBtn) {
+        shareIgBtn.addEventListener('click', async () => {
+            await shareToInstagramStory();
+        });
+    }
+
+    // WhatsApp share pill
+    const shareWaBtn = document.getElementById('btn-share-wa');
+    if (shareWaBtn) {
+        shareWaBtn.addEventListener('click', async () => {
+            if (!lastVideoBlob) {
+                showToast('🎬 Record a video first!');
+                return;
+            }
+
+            const file = new File([lastVideoBlob], lastVideoFileName, {
+                type: lastVideoBlob.type
+            });
+
+            // Try Web Share API with file for WhatsApp
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Valentine Wrapped 💕',
+                        text: `Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in`,
+                        files: [file]
+                    });
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
+            }
+
+            // Fallback: open WhatsApp with text (no file)
+            const text = encodeURIComponent(`Hey! Check out our Valentine Wrapped 💕\n${stats.days} days of love together ✨\n\nCreate yours too → valentinewrapped.in\n\n#ValentineWrapped2026`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+            showToast('📥 Download the video first, then attach in WhatsApp');
+        });
+    }
 
     // Generic share / More options
-    document.getElementById('btn-share-more').addEventListener('click', async () => {
-        if (!lastVideoBlob) {
-            showToast('🎬 Record a video first!');
-            return;
-        }
-
-        const file = new File([lastVideoBlob], lastVideoFileName, {
-            type: lastVideoBlob.type
-        });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({
-                    title: 'Valentine Wrapped 2026 💕',
-                    text: `Our Valentine Wrapped 💕 Create yours → valentinewrapped.in`,
-                    files: [file]
-                });
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    showToast('❌ Sharing failed. Try downloading instead.');
-                }
+    const shareMoreBtn = document.getElementById('btn-share-more');
+    if (shareMoreBtn) {
+        shareMoreBtn.addEventListener('click', async () => {
+            if (!lastVideoBlob) {
+                showToast('🎬 Record a video first!');
+                return;
             }
-        } else if (navigator.share) {
-            // Share without file
-            try {
-                await navigator.share({
-                    title: 'Valentine Wrapped 2026 💕',
-                    text: `Check out our Valentine Wrapped! 💕 Create yours → valentinewrapped.in`,
-                    url: 'https://valentinewrapped.in'
-                });
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    showToast('❌ Sharing failed.');
-                }
-            }
-        } else {
-            // No share API at all — copy link
-            navigator.clipboard.writeText('https://valentinewrapped.in').then(() => {
-                showToast('🔗 Link copied! Share it manually');
-            }).catch(() => {
-                showToast('🔗 valentinewrapped.in — Share this link!');
+
+            const file = new File([lastVideoBlob], lastVideoFileName, {
+                type: lastVideoBlob.type
             });
-        }
-    });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Valentine Wrapped 2026 💕',
+                        text: `Our Valentine Wrapped 💕 Create yours → valentinewrapped.in`,
+                        files: [file]
+                    });
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast('❌ Sharing failed. Try downloading instead.');
+                    }
+                }
+            } else if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Valentine Wrapped 2026 💕',
+                        text: `Check out our Valentine Wrapped! 💕 Create yours → valentinewrapped.in`,
+                        url: 'https://valentinewrapped.in'
+                    });
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast('❌ Sharing failed.');
+                    }
+                }
+            } else {
+                navigator.clipboard.writeText('https://valentinewrapped.in').then(() => {
+                    showToast('🔗 Link copied! Share it manually');
+                }).catch(() => {
+                    showToast('🔗 valentinewrapped.in — Share this link!');
+                });
+            }
+        });
+    }
 
     // ============================================
     // Toast

@@ -644,38 +644,316 @@
 }
 
 /* ============================================
-   Video CTA
+   Video Hero Section (Inline on Result Page)
    ============================================ */
-.video-cta {
+.video-hero-section {
     text-align: center;
     margin-bottom: var(--space-xl);
-    border: 1px solid rgba(107, 92, 231, 0.2);
+    padding: var(--space-xl) var(--space-md);
+    border-radius: var(--radius-xl);
     background: linear-gradient(145deg, rgba(107, 92, 231, 0.08), rgba(232, 67, 106, 0.06));
-    animation: fadeInUp 0.6s ease-out 0.2s forwards;
+    border: 1px solid rgba(107, 92, 231, 0.2);
+    animation: fadeInUp 0.6s ease-out forwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.video-hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg at 50% 50%,
+            transparent 0deg, rgba(232, 67, 106, 0.03) 60deg,
+            transparent 120deg, rgba(107, 92, 231, 0.03) 180deg,
+            transparent 240deg, rgba(245, 197, 66, 0.02) 300deg,
+            transparent 360deg);
+    animation: rotate 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.video-hero-label {
+    margin-bottom: var(--space-md);
+    position: relative;
+    z-index: 1;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 18px;
+    background: linear-gradient(135deg, rgba(232, 67, 106, 0.15), rgba(107, 92, 231, 0.15));
+    border: 1px solid rgba(232, 67, 106, 0.25);
+    border-radius: var(--radius-full);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-primary-light);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Inline Canvas */
+.inline-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto var(--space-lg);
+    aspect-ratio: 9 / 16;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(232, 67, 106, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    z-index: 1;
+}
+
+.inline-canvas-wrapper canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.inline-canvas-wrapper .canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 6, 18, 0.35);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.inline-canvas-wrapper .canvas-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.play-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-lg);
+    color: white;
+    padding: 16px 28px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.play-btn:hover {
+    background: rgba(232, 67, 106, 0.4);
+    transform: scale(1.05);
+}
+
+.play-icon {
+    font-size: 1.8rem;
+}
+
+/* Video Hero Controls */
+.video-hero-controls {
+    position: relative;
+    z-index: 1;
+}
+
+.video-hero-controls .btn-pulse {
+    width: 100%;
+    max-width: 320px;
+}
+
+.record-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: var(--space-xs);
+}
+
+/* Recording indicator */
+.recording-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #ff4757;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: var(--space-md);
+}
+
+.recording-dot {
+    width: 10px;
+    height: 10px;
+    background: #ff4757;
+    border-radius: 50%;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+    }
+}
+
+.progress-bar {
+    width: 100%;
+    max-width: 240px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    border-radius: 2px;
+    transition: width 0.3s linear;
+}
+
+/* Instagram Story Button */
+.btn-ig-story {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 320px;
+    padding: 14px 24px;
+    margin-top: var(--space-md);
+    border: none;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(131, 58, 180, 0.3);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.btn-ig-story::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+.btn-ig-story:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(131, 58, 180, 0.45);
+}
+
+.btn-ig-story .ig-icon {
+    flex-shrink: 0;
+}
+
+/* Share Row (WhatsApp, More) */
+.share-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    margin-top: var(--space-md);
+    animation: fadeInUp 0.4s ease-out 0.1s forwards;
     opacity: 0;
 }
 
-.video-cta-icon {
-    font-size: 2.5rem;
-    margin-bottom: var(--space-md);
-    animation: float 3s ease-in-out infinite;
+.share-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.video-cta h3 {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    margin-bottom: var(--space-sm);
+.share-chip:hover {
+    transform: translateY(-2px);
 }
 
-.video-cta p {
-    font-size: 0.82rem;
+.share-chip-wa {
+    background: #25D366;
+}
+
+.share-chip-more {
+    background: var(--bg-glass);
+    border: 1px solid var(--bg-glass-border);
+}
+
+/* Section Divider */
+.section-divider {
+    text-align: center;
+    margin: var(--space-xl) 0;
+    position: relative;
+}
+
+.section-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232, 67, 106, 0.3), transparent);
+}
+
+.divider-label {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-page);
+    padding: 0 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
     color: var(--text-secondary);
-    margin-bottom: var(--space-lg);
-}
-
-.video-cta .btn {
-    width: 100%;
-    max-width: 280px;
 }
 
 /* ============================================
